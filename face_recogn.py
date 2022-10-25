@@ -1,7 +1,8 @@
 import face_recognition
 from PIL import Image
 import os
-import json
+import pickle
+
 import argparse
 
 
@@ -28,22 +29,31 @@ def compare_faces(img1_path, img2_path):
 def load_to_base(img_path, base_path, link):
     img = face_recognition.load_image_file(img_path)
     img_encodings = face_recognition.face_encodings(img)[0]
-    with open(base_path, 'r+') as base:
-        data = json.load(base)
-        data["encodings_with_links"].append((img_encodings, link))
-        base.seek(0)
-        json.dump(data, base, indent=4)
+    with open(base_path, 'wb+') as base:
+        if os.path.getsize(base_path) > 0:
+            data = pickle.load(base)
+            data[link] = img_encodings
+            pickle.dump(data, base)
+        else:
+            data = {link: img_encodings}
+            pickle.dump(data, base)
+
+
+def check_base(base_path):
+    with open(base_path, 'rb+') as base:
+        t = pickle.load(base)
+        print(t)
 
 
 def find_in_base(img_path, base_path):
     img = face_recognition.load_image_file(img_path)
     img_encodings = face_recognition.face_encodings(img)[0]
-    base = open(base_path, "r+")
-    data = json.load(base)
-    base.close()
-    for data_item in data["encodings_with_links"]:
-        if compare_faces_encodings(img_encodings, data_item[0]):
-            return data_item[1]
+    with open(base_path, "rb+")as base:
+        data = pickle.load(base)
+
+    for link, encoding in data.items():
+        if compare_faces_encodings(img_encodings, encoding):
+            return link
     return 'Nothing was found un base'
 
 
@@ -75,11 +85,19 @@ def main():
     find.add_argument('--img_path', type=str, required=True)
     find.add_argument('--base_path', type=str, required=True)
     find.add_argument('--token', type=str, required=True)
+    find.set_defaults(func=find_in_base)
+
+    check = subparser.add_parser('check')
+    check.add_argument('--base_path', type=str, required=True)
+    check.set_defaults(func=check_base)
 
     args = parser.parse_args()
 
     if args.command == 'load':
         load_to_base(args.img_path, args.base_path, args.link)
+
+    if args.command == 'check':
+        check_base(args.base_path)
 
     if args.command == 'find':
         persons_dir = f'faces({args.token})'
