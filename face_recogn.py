@@ -1,6 +1,7 @@
 import face_recognition
 from PIL import Image
 import os
+import pandas
 import pickle
 
 import argparse
