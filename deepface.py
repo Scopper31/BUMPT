@@ -6,6 +6,7 @@ import pickle
 
 import argparse
 
+# саня лох
 
 def convert_to_encodings(img_path):
     img = face_recognition.load_image_file(img_path)
