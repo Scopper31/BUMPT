@@ -1,12 +1,12 @@
 import face_recognition
 from PIL import Image
 import os
-import pandas as pd
 import pickle
 
 import sqlite3
 
 import argparse
+import numpy
 
 # саня лох
 
@@ -36,8 +36,19 @@ def load_to_base(img_path, base_path, link):
     
     base = sqlite3.connect(base_path)
     cur = base.cursor()
-    cur.execute(f"""INSERT INTO links (SELECT COUNT(*) FROM links, {link}""")
+    if (cur.execute(f"""SELECT COUNT(*) FROM links
+                        WHERE link = "{link}" """).fetchone() == 0):
+        cur.execute(f"""INSERT INTO links
+                        VALUES ((SELECT COUNT(*) FROM links), "{link}")""")
 
+    h = ' '.join(str(e) for e in img_encodings)
+    cur.execute(f"""INSERT INTO encodings
+                    VALUES ((SELECT COUNT(*) FROM encodings),
+                        (SELECT id FROM links
+                        WHERE link = "{link}"),
+                        "{h}") """)
+
+    base.commit()
     base.close()
     '''with open(base_path, 'wb+') as base:
         if os.path.getsize(base_path) > 0:
@@ -58,13 +69,24 @@ def check_base(base_path):
 def find_in_base(img_path, base_path):
     img = face_recognition.load_image_file(img_path)
     img_encodings = face_recognition.face_encodings(img)[0]
-    with open(base_path, "rb+")as base:
-        data = pickle.load(base)
 
-    for link, encoding in data.items():
-        if compare_faces_encodings(img_encodings, encoding):
-            return link
-    return 'Nothing was found un base'
+
+    base = sqlite3.connect(base_path)
+    cur = base.cursor()
+
+    db = cur.execute("""SELECT encoding FROM encodings""").fetchall()
+    h = ' '.join(str(e) for e in img_encodings)
+    ok = -1
+    for e in db:
+        if compare_faces_encodings(img_encodings, numpy.array([float(ee) for ee in e[0].split()])):
+            ok = e[0]
+    if (type(ok) != int):
+        return cur.execute(f"""SELECT link FROM links
+                               WHERE id = (
+                                   SELECT link_id FROM encodings
+                                   WHERE encoding = "{ok}") """).fetchone()[0]
+    else:
+        return 'Nothing was found in base'
 
 
 def extracting_faces(img_path, persons_dir):
@@ -110,7 +132,7 @@ def main():
         check_base(args.base_path)
 
     if args.command == 'find':
-        persons_dir = f'faces({args.token})'
+        persons_dir = f'faces_{args.token}'
 
         os.mkdir(persons_dir)
 
@@ -121,7 +143,10 @@ def main():
         find_result = find_in_base(chosen_face_abs_path, args.base_path)
         print(find_result)
 
-        os.remove(persons_dir)
+        try:
+            os.system(f"rm -rf {persons_dir}")
+        except:
+            os.remove(persons_dir)
 
 
 if __name__ == '__main__':
