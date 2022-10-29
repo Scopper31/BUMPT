@@ -108,7 +108,7 @@ def main():
         extracting_faces(args.img_path, persons_dir)
         chosen_face_number = input('chosen_face_number ')
         chosen_face_path = f'{args.img_path[:-4]}_face({chosen_face_number}).jpg'
-        chosen_face_abs_path = f'{persons_dir}/{chosen_face_path}'
+        chosen_face_abs_path = f'{persons_dir}/{chosen_face_path}' #саня лох
         find_result = find_in_base(chosen_face_abs_path, args.base_path)
         print(find_result)
 
