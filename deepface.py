@@ -4,6 +4,8 @@ import os
 import pandas as pd
 import pickle
 
+import sqlite3
+
 import argparse
 
 # саня лох
@@ -31,14 +33,20 @@ def compare_faces(img1_path, img2_path):
 def load_to_base(img_path, base_path, link):
     img = face_recognition.load_image_file(img_path)
     img_encodings = face_recognition.face_encodings(img)[0]
-    with open(base_path, 'wb+') as base:
+    
+    base = sqlite3.connect(base_path)
+    cur = base.cursor()
+    cur.execute(f"""INSERT INTO links (SELECT COUNT(*) FROM links, {link}""")
+
+    base.close()
+    '''with open(base_path, 'wb+') as base:
         if os.path.getsize(base_path) > 0:
             data = pickle.load(base)
             data[link] = img_encodings
             pickle.dump(data, base)
         else:
             data = {link: img_encodings}
-            pickle.dump(data, base)
+            pickle.dump(data, base)'''
 
 
 def check_base(base_path):
