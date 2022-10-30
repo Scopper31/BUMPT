@@ -80,7 +80,7 @@ def find_in_base(img_path, base_path):
     for e in db:
         if compare_faces_encodings(img_encodings, numpy.array([float(ee) for ee in e[0].split()])):
             ok = e[0]
-    if (type(ok) != int):
+    if type(ok) != int:
         return cur.execute(f"""SELECT link FROM links
                                WHERE id = (
                                    SELECT link_id FROM encodings
