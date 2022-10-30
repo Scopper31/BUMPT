@@ -106,9 +106,6 @@ def main():
     if args.command == 'load':
         load_to_base(args.img_path, args.base_path, args.link)
 
-    if args.command == 'check':
-        check_base(args.base_path)
-
     if args.command == 'find':
         persons_dir = f'faces_{args.token}'
 
