@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block title %}
+find
+{% endblock %}
+
+{% block body %}
+    <h2 style="text-align: center;" >Find</h2>
+
+    <p>Your username<br>
+    <input type="text" size="20">
+    </p>
+
+    <p>Your photo</p>
+    <p><input type="file" name="photo" multiple accept="image/*,image/jpeg"><p/>
+
+    <input type="submit" value="send">
+
+    <p>Choose person<br>
+    <p><input type="chosen_face" size="20"><p/>
+    <input type="submit" value="send">
+
+
+    <p>Presons link: <output name="result">0</output></p>
+{% endblock %}
